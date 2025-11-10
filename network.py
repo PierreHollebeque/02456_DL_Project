@@ -170,3 +170,6 @@ class VGGFeatureExtractor(nn.Module):
 
 # Alias to match the original TF naming convention
 vggnet = VGGFeatureExtractor
+
+print("Number of weights : Generator =", sum(p.numel() for p in Generator("SRGAN_Generator", B=8).parameters() if p.requires_grad))
+print("Number of weights : Discriminator =", sum(p.numel() for p in Discriminator("SRGAN_Discriminator").parameters() if p.requires_grad))

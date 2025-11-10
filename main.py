@@ -1,5 +1,6 @@
 import argparse
 from train_test import train, test, up_scale
+from utils import load_cars_dataset
 from PIL import Image
 import numpy as np
 import os
@@ -33,6 +34,19 @@ if __name__ == "__main__":
     
     # Parse initial arguments
     args = parser.parse_args()
+
+
+    # Import the dataset
+    train_loader, test_loader = load_cars_dataset()
+    if train_loader and test_loader:
+        # Check one batch
+        images, labels = next(iter(train_loader))
+        print(f"Batch image tensor shape: {images.shape}")
+        print(f"Batch label tensor shape: {labels.shape}")
+        print(f"Unique labels in batch: {labels.unique().tolist()}")
+
+
+
 
     # --- Execution Logic ---
     if args.mode == "test":
