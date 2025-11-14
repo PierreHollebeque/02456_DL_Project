@@ -77,7 +77,7 @@ def load_cars_dataset(batch_size=64, seed=42):
         )
 
         print(f"Using {len(train_loader.dataset)} training and {len(test_loader.dataset)} test images")
-        return train_loader, test_loader
+        return train_loader, test_loader, data_dir
     except Exception as e:
         print(f"Error loading Cars dataset: {e}")
         return None, None

@@ -29,7 +29,7 @@ if __name__ == "__main__":
     parser.add_argument("--path_save_model", type=str, default="./save_para/", help="Path to save model checkpoints.")
 
     # Mode Argument
-    parser.add_argument("--mode", type=str, default="train", choices=["train", "test"], 
+    parser.add_argument("--mode", type=str, default="test", choices=["train", "test"], 
                         help="Execution mode: 'train' or 'test'.")
     
     # Parse initial arguments
@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
 
     # Import the dataset
-    train_loader, test_loader = load_cars_dataset()
+    train_loader, test_loader,data_dir = load_cars_dataset()
     if train_loader and test_loader:
         # Check one batch
         images, labels = next(iter(train_loader))
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     if args.mode == "test":
         
         # Add test image path argument only in 'test' mode
-        parser.add_argument("--path_test_img", type=str, default="./test/0.jpg", 
+        parser.add_argument("--path_test_img", type=str, default=os.path.join(data_dir,"Cars Dataset/test/Audi/23.jpg"), 
                             help="Path to the HR (High-Resolution) test image.")
         args = parser.parse_args() # Re-parse to include the new argument
         
