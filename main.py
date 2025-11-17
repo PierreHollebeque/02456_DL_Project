@@ -16,11 +16,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="PyTorch SRGAN Training and Testing Script")
 
     # Training and Path Arguments
-    parser.add_argument("--batch_size", type=int, default=4, help="Batch size (Paper: 16).")
+    parser.add_argument("--batch_size", type=int, default=16, help="Batch size (Paper: 16).")
     parser.add_argument("--lambd", type=float, default=1e-3, help="Weight for adversarial loss (lambda).")
     parser.add_argument("--learning_rate", type=float, default=1e-4, help="Initial learning rate.")
     parser.add_argument("--clip_v", type=float, default=0.05, help="Discriminator weight clipping value (WGAN).")
-    parser.add_argument("--B", type=int, default=5, help="Number of residual blocks (Paper: 16).")
+    parser.add_argument("--B", type=int, default=4, help="Number of residual blocks (Paper: 16).")
     parser.add_argument("--max_itr", type=int, default=100000, help="Maximum number of iterations (Paper: 600000).")
     
     # NOTE: path_trainset should point to the directory containing 'LR/' and 'HR/' subfolders
@@ -63,7 +63,7 @@ if __name__ == "__main__":
             print(f"▶️ Test Mode: Loading image {args.path_test_img}")
             
             # Load HR image
-            img = np.array(Image.open(args.path_test_img).convert('RGB')) 
+            img = np.array(Image.open(args.path_test_img)) 
             
             # Calculate LR dimensions (down sample factor: 4)
             h, w = img.shape[0] // 4, img.shape[1] // 4 
@@ -74,7 +74,8 @@ if __name__ == "__main__":
             # Call the test function
             test(downsampled_img, img, args.B)
             
-    else: # args.mode == "train"
+    elif args.mode == "train":
+       # args.mode == "train"
         print("▶️ Training Mode: Starting SRGAN process.")
         print(f"Dataset Path: {args.path_trainset}")
         print(f"Parameters: Batch={args.batch_size}, B-Blocks={args.B}, Max Iters={args.max_itr}")
