@@ -5,7 +5,6 @@ import os
 import torch
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-import zipfile
 import kagglehub
 
 

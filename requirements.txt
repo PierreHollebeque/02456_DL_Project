@@ -5,7 +5,9 @@ tqdm
 Pillow
 matplotlib
 scikit-learn
+scikit-image
 pandas
 seaborn
 opencv-python
 scipy
+kagglehub
