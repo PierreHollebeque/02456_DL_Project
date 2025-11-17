@@ -141,11 +141,21 @@ def test(downsampled_img, hr_img, B, model_path="./save_para/G_model.pth"):
     p_bic = psnr(hr_img, bic_img)
     s_bic = ssim(hr_img, bic_img, channel_axis=-1, data_range=255)
 
-    Image.fromarray(np.uint8(sr_img_resized)).show(title="SR Image")
-    Image.fromarray(np.uint8(downsampled_img)).show(title="LR Image")
-    Image.fromarray(np.uint8(bic_img)).show(title="Bicubic")
+    # --- Save output images instead of showing them ---
+    output_dir = "result_bin"
+    os.makedirs(output_dir, exist_ok=True)
+    # Convert numpy arrays to PIL Images and save
+    # Image.fromarray(np.uint8(sr_img_resized)).show(title="SR Image")
+    # Image.fromarray(np.uint8(downsampled_img)).show(title="LR Image")
+    # Image.fromarray(np.uint8(bic_img)).show(title="Bicubic")
+    Image.fromarray(np.uint8(sr_img_resized)).save(os.path.join(output_dir, "sr_image.png"))
+    Image.fromarray(np.uint8(downsampled_img)).save(os.path.join(output_dir, "lr_image.png"))
+    Image.fromarray(np.uint8(bic_img)).save(os.path.join(output_dir, "bicubic_image.png"))
+    Image.fromarray(np.uint8(hr_img)).save(os.path.join(output_dir, "hr_image.png"))
     
     print(f"SR PSNR: {p_sr:.4f}, SR SSIM: {s_sr:.4f}, BIC PSNR: {p_bic:.4f}, BIC SSIM: {s_bic:.4f}")
+    print(f"✅ Images saved in '{output_dir}/' directory.")
+
 
 # --- Training Function ---
 
