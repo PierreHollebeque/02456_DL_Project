@@ -1,4 +1,4 @@
-from PIL import Image, ImageDraw
+from PIL import Image, ImageChops
 import numpy as np
 import os, shutil, argparse
 import random
@@ -20,15 +20,32 @@ in_size = (40, 120)
 out_size = (80, 240)
 
 
-def crop_relevant_zone(image_path: str, crop_size: tuple[int, int]):
+def crop_relevant_zone(image_path: str, crop_size: tuple[int, int], tiff=False):
     try:
-        original_image = Image.open(image_path)
+        raw_image = Image.open(image_path)
+        # Apply specific processing if tiff is True
+        if tiff:
+            try:
+                raw_image.seek(0)
+                p1 = raw_image.copy().convert("RGB")
+                
+                raw_image.seek(1)
+                p2 = raw_image.copy().convert("RGB")
+                
+                # The image to work on becomes the product of the two frames
+                original_image = ImageChops.multiply(p1, p2)
+            except EOFError:
+                print(f"Error: The TIFF file '{image_path}' does not contain enough frames.")
+                return None
+        else:
+            # Otherwise use the image as is
+            original_image = raw_image
     except FileNotFoundError:
         print(f"Error: The file '{image_path}' was not found.")
-        return
+        return None
     except Exception as e:
         print(f"Error opening or reading the image: {e}")
-        return
+        return None
 
     if original_image.mode not in ['I', 'F', 'L']:
         grayscale_image = original_image.convert('L') # 'L' converts to 8-bit grayscale, which is fine for finding the location of max brightness
@@ -36,6 +53,9 @@ def crop_relevant_zone(image_path: str, crop_size: tuple[int, int]):
         grayscale_image = original_image
 
     image_array = np.array(grayscale_image)
+    if image_array.size == 0 or image_array.max() == image_array.min():
+        print(f"Error: The image '{image_path}' is empty or has no variation in pixel values.")
+        return None
     window_size = 150
     filtered_image = gaussian_filter(image_array.astype(np.float32), sigma= window_size/6)
 
@@ -91,23 +111,24 @@ def data_generator(average=False, force=False):
         # Process low-resolution images
         print("--- Processing low-resolution images ---")
         image_count = 0
-        number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')])*4
+        number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')]) * 4 
         list_train_test = create_list(number_of_images)
         for filename in os.listdir(dir_low):
             if filename.endswith('.tiff'):
                 inputh_path = os.path.join(dir_low, filename)
-                cropped_image = crop_relevant_zone(inputh_path, in_size)
-                for h_flip, v_flip in flip_possible:
-                    augmented_image = flip(cropped_image, horizontal=h_flip, vertical=v_flip)
-                    if list_train_test[image_count]:
-                      output_path = os.path.join(dir_result,'trainA', f"{image_count}.tiff")
-                      augmented_image.save(output_path)
-                      image_count += 1
-                    else :
-                      output_path = os.path.join(dir_result,'testA', f"{image_count}.tiff")
-                      augmented_image.save(output_path)
-                      image_count += 1
-                    print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
+                cropped_image = crop_relevant_zone(inputh_path, in_size, tiff=True)
+                if cropped_image is not None:
+                    for h_flip, v_flip in flip_possible:
+                        augmented_image = flip(cropped_image, horizontal=h_flip, vertical=v_flip)
+                        if list_train_test[image_count]:
+                            output_path = os.path.join(dir_result,'trainA', f"{image_count}.png")
+                            augmented_image.save(output_path)
+                            image_count += 1
+                        else :
+                            output_path = os.path.join(dir_result,'testA', f"{image_count}.png")
+                            augmented_image.save(output_path)
+                            image_count += 1
+                            print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
 
 
 
@@ -143,22 +164,22 @@ def data_generator(average=False, force=False):
             for filename2 in os.listdir(dir_low):
                 if filename1.endswith('.tiff') and filename2.endswith('.tiff') and filename1 != filename2:
                     inputh_path = os.path.join(dir_low, filename1)
-                    cropped_image1 = crop_relevant_zone(inputh_path, in_size)
+                    cropped_image1 = crop_relevant_zone(inputh_path, in_size, tiff=True)
                     inputh_path = os.path.join(dir_low, filename2)
-                    cropped_image2 = crop_relevant_zone(inputh_path, in_size)
-                    average_image = Image.blend(cropped_image1, cropped_image2, alpha=0.5)
-
-                    for h_flip, v_flip in flip_possible:
-                        augmented_image = flip(average_image, horizontal=h_flip, vertical=v_flip)
-                        if list_train_test[image_count]:
-                          output_path = os.path.join(dir_result,'trainA', f"{image_count}.tiff")
-                          augmented_image.save(output_path)
-                          image_count += 1
-                        else :
-                          output_path = os.path.join(dir_result,'testA', f"{image_count}.tiff")
-                          augmented_image.save(output_path)
-                          image_count += 1
-                        print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
+                    cropped_image2 = crop_relevant_zone(inputh_path, in_size, tiff=True)
+                    if cropped_image1 is None or cropped_image2 is None:
+                        average_image = Image.blend(cropped_image1, cropped_image2, alpha=0.5)
+                        for h_flip, v_flip in flip_possible:
+                            augmented_image = flip(average_image, horizontal=h_flip, vertical=v_flip)
+                            if list_train_test[image_count]:
+                                output_path = os.path.join(dir_result,'trainA', f"{image_count}.png")
+                                augmented_image.save(output_path)
+                                image_count += 1
+                            else :
+                                output_path = os.path.join(dir_result,'testA', f"{image_count}.png")
+                                augmented_image.save(output_path)
+                                image_count += 1
+                                print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
         
         # Process high-resolution images
         print("--- Processing high-resolution images ---")
