@@ -289,7 +289,7 @@ def main() -> None:
                         help="Overwrite the existing dataset folder if it exists")
     args = parser.parse_args()
 
-    data_generator(average=args.average,force = args.force_create,flip_bool=args.flip)
+    data_generator(average=args.average,force = args.force_create,flip_bool=False)
 
 if __name__ == "__main__":
     print('Starting data cropping and augmentation...')
