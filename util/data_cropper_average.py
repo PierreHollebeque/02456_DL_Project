@@ -195,9 +195,9 @@ def data_generator(average=False, force=False):
             for filename2 in os.listdir(dir_high):
                 if filename1.endswith('.png') and filename2.endswith('.png') and filename1 != filename2:
                     inputh_path = os.path.join(dir_high, filename1)
-                    cropped_image1 = crop_relevant_zone(inputh_path, in_size)
+                    cropped_image1 = crop_relevant_zone(inputh_path, out_size)
                     inputh_path = os.path.join(dir_high, filename2)
-                    cropped_image2 = crop_relevant_zone(inputh_path, in_size)
+                    cropped_image2 = crop_relevant_zone(inputh_path, out_size)
                     average_image = Image.blend(cropped_image1, cropped_image2, alpha=0.5)
                     average_image = reformate_size(average_image, (256,256))
                     for h_flip, v_flip in flip_possible:
