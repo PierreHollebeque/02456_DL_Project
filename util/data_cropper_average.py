@@ -258,21 +258,32 @@ def data_generator(average=False, force=False, flip_bool=True):
 
 
 
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
 def main() -> None:
     # Read parameters from configuration file
     parser = argparse.ArgumentParser()
     parser.add_argument("--average",
-                        type=bool,
+                        type=str2bool,
                         default=False,
                         required=False,
                         help="Create the average datasets N*(N-1) elements")
     parser.add_argument("--flip",
-                        type=bool,
+                        type=str2bool,
                         default=True,
                         required=False,
                         help="Flip vertically and horizontally images (multiply number of images by 4)")
     parser.add_argument("--force_create",
-                        type=bool,
+                        type=str2bool,
                         default=False,
                         required=False,
                         help="Overwrite the existing dataset folder if it exists")
