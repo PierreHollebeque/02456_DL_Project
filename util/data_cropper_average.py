@@ -128,7 +128,7 @@ def data_generator(average=False, force=False):
                             output_path = os.path.join(dir_result,'testA', f"{image_count}.png")
                             augmented_image.save(output_path)
                             image_count += 1
-                            print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
+                        print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
 
 
 
@@ -167,7 +167,7 @@ def data_generator(average=False, force=False):
                     cropped_image1 = crop_relevant_zone(inputh_path, in_size, tiff=True)
                     inputh_path = os.path.join(dir_low, filename2)
                     cropped_image2 = crop_relevant_zone(inputh_path, in_size, tiff=True)
-                    if cropped_image1 is None or cropped_image2 is None:
+                    if cropped_image1 is not None or cropped_image2 is not None:
                         average_image = Image.blend(cropped_image1, cropped_image2, alpha=0.5)
                         for h_flip, v_flip in flip_possible:
                             augmented_image = flip(average_image, horizontal=h_flip, vertical=v_flip)
@@ -179,7 +179,7 @@ def data_generator(average=False, force=False):
                                 output_path = os.path.join(dir_result,'testA', f"{image_count}.png")
                                 augmented_image.save(output_path)
                                 image_count += 1
-                                print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
+                            print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
         
         # Process high-resolution images
         print("--- Processing high-resolution images ---")
