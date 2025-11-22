@@ -98,7 +98,7 @@ def flip(image: Image.Image, horizontal: bool = False, vertical: bool = False) -
 
 
 
-def data_generator(average=False, force=False, flip=True):
+def data_generator(average=False, force=False, flip_bool=True):
     flip_possible = [(False, False), (True, False), (False, True), (True, True)]
 
     # Create output directory / reset it 
@@ -132,7 +132,7 @@ def data_generator(average=False, force=False, flip=True):
                 cropped_image = crop_relevant_zone(inputh_path, in_size, tiff=True)
                 cropped_image = reformate_size(cropped_image, (256,256))
                 if cropped_image is not None:
-                    if not flip :
+                    if not flip_bool :
                         augmented_image = cropped_image
                         if list_train_test[image_count]:
                             output_path = os.path.join(dir_result,'trainA', f"{image_count}.png")
@@ -163,7 +163,7 @@ def data_generator(average=False, force=False, flip=True):
                 inputh_path = os.path.join(dir_high, filename)
                 cropped_image = crop_relevant_zone(inputh_path, out_size)
                 cropped_image = reformate_size(cropped_image, (256,256))
-                if not flip :
+                if not flip_bool :
                     augmented_image = cropped_image
                     if list_train_test[image_count]:
                         output_path = os.path.join(dir_result,'trainB', f"{image_count}.png")
@@ -204,7 +204,7 @@ def data_generator(average=False, force=False, flip=True):
                     if cropped_image1 is not None or cropped_image2 is not None:
                         average_image = Image.blend(cropped_image1, cropped_image2, alpha=0.5)
                         average_image = reformate_size(average_image, (256,256))
-                        if not flip :
+                        if not flip_bool :
                             augmented_image = average_image
                             if list_train_test[image_count]:
                                 output_path = os.path.join(dir_result,'trainA', f"{image_count}.png")
@@ -236,7 +236,7 @@ def data_generator(average=False, force=False, flip=True):
                     cropped_image2 = crop_relevant_zone(inputh_path, out_size)
                     average_image = Image.blend(cropped_image1, cropped_image2, alpha=0.5)
                     average_image = reformate_size(average_image, (256,256))
-                    if not flip :
+                    if not flip_bool :
                         augmented_image = average_image
                         if list_train_test[image_count]:
                             output_path = os.path.join(dir_result,'trainB', f"{image_count}.png")
