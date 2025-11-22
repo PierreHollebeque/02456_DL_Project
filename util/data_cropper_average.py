@@ -121,7 +121,7 @@ def data_generator(average=False, force=False, flip_bool=True):
         # Process low-resolution images
         print("--- Processing low-resolution images ---")
         image_count = 0
-        if flip :
+        if flip_bool :
             number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')]) * 4 
         else :
             number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')])
@@ -189,7 +189,7 @@ def data_generator(average=False, force=False, flip_bool=True):
         # Process low-resolution images
         print("--- Processing low-resolution images ---")
         image_count = 0
-        if flip :
+        if flip_bool :
             number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')]) * 4 * (len([name for name in os.listdir(dir_low) if name.endswith('.tiff')])-1)
         else :
             number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')]) *(len([name for name in os.listdir(dir_low) if name.endswith('.tiff')])-1)
@@ -288,8 +288,8 @@ def main() -> None:
                         required=False,
                         help="Overwrite the existing dataset folder if it exists")
     args = parser.parse_args()
-
-    data_generator(average=args.average,force = args.force_create,flip_bool=False)
+    print(args.flip)
+    data_generator(average=args.average,force = args.force_create,flip_bool=args.flip)
 
 if __name__ == "__main__":
     print('Starting data cropping and augmentation...')
