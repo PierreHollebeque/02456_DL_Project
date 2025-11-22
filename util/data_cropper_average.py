@@ -16,8 +16,8 @@ from scipy.ndimage import gaussian_filter
 dir_low = 'datasets/data_original/CFRP_60_low/'
 dir_high = 'datasets/data_original/CFRP_60_high/'
 dir_result = 'datasets/ifr_images'
-in_size = (40, 120)
-out_size = (80, 240)
+in_size = (40, 128)
+out_size = (80, 256)
 
 
 def crop_relevant_zone(image_path: str, crop_size: tuple[int, int], tiff=False):
@@ -78,6 +78,16 @@ def crop_relevant_zone(image_path: str, crop_size: tuple[int, int], tiff=False):
     cropped_image = original_image.crop(crop_box)
     return cropped_image
 
+def reformate_size(image: Image.Image, target_size: tuple[int, int]) -> Image.Image:
+    current_size = image.size
+    new_image = Image.new("RGB", target_size)
+    if target_size[1] != current_size[1]:
+        image = image.resize(out_size)
+        current_size = image.size
+    x_coord = (target_size[0] - current_size[0]) //2
+    new_image.paste(image, (x_coord, 0))
+    return new_image
+
 
 def flip(image: Image.Image, horizontal: bool = False, vertical: bool = False) -> Image.Image:
     if horizontal:
@@ -117,17 +127,16 @@ def data_generator(average=False, force=False):
             if filename.endswith('.tiff'):
                 inputh_path = os.path.join(dir_low, filename)
                 cropped_image = crop_relevant_zone(inputh_path, in_size, tiff=True)
+                cropped_image = reformate_size(cropped_image, (256,256))
                 if cropped_image is not None:
                     for h_flip, v_flip in flip_possible:
                         augmented_image = flip(cropped_image, horizontal=h_flip, vertical=v_flip)
                         if list_train_test[image_count]:
                             output_path = os.path.join(dir_result,'trainA', f"{image_count}.png")
-                            augmented_image.save(output_path)
-                            image_count += 1
                         else :
                             output_path = os.path.join(dir_result,'testA', f"{image_count}.png")
-                            augmented_image.save(output_path)
-                            image_count += 1
+                        augmented_image.save(output_path)
+                        image_count += 1
                         print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
 
 
@@ -140,16 +149,15 @@ def data_generator(average=False, force=False):
             if filename.endswith('.png'):
                 inputh_path = os.path.join(dir_high, filename)
                 cropped_image = crop_relevant_zone(inputh_path, out_size)
+                cropped_image = reformate_size(cropped_image, (256,256))
                 for h_flip, v_flip in flip_possible:
                     augmented_image = flip(cropped_image, horizontal=h_flip, vertical=v_flip)
                     if list_train_test[image_count]:
                       output_path = os.path.join(dir_result,'trainB', f"{image_count}.png")
-                      augmented_image.save(output_path)
-                      image_count += 1
                     else :
                       output_path = os.path.join(dir_result,'testB', f"{image_count}.png")
-                      augmented_image.save(output_path)
-                      image_count += 1
+                    augmented_image.save(output_path)
+                    image_count += 1
                     print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
 
     else :
@@ -169,16 +177,15 @@ def data_generator(average=False, force=False):
                     cropped_image2 = crop_relevant_zone(inputh_path, in_size, tiff=True)
                     if cropped_image1 is not None or cropped_image2 is not None:
                         average_image = Image.blend(cropped_image1, cropped_image2, alpha=0.5)
+                        average_image = reformate_size(average_image, (256,256))
                         for h_flip, v_flip in flip_possible:
                             augmented_image = flip(average_image, horizontal=h_flip, vertical=v_flip)
                             if list_train_test[image_count]:
                                 output_path = os.path.join(dir_result,'trainA', f"{image_count}.png")
-                                augmented_image.save(output_path)
-                                image_count += 1
                             else :
                                 output_path = os.path.join(dir_result,'testA', f"{image_count}.png")
-                                augmented_image.save(output_path)
-                                image_count += 1
+                            augmented_image.save(output_path)
+                            image_count += 1
                             print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
         
         # Process high-resolution images
@@ -192,17 +199,15 @@ def data_generator(average=False, force=False):
                     inputh_path = os.path.join(dir_high, filename2)
                     cropped_image2 = crop_relevant_zone(inputh_path, in_size)
                     average_image = Image.blend(cropped_image1, cropped_image2, alpha=0.5)
-
+                    average_image = reformate_size(average_image, (256,256))
                     for h_flip, v_flip in flip_possible:
                         augmented_image = flip(average_image, horizontal=h_flip, vertical=v_flip)
                         if list_train_test[image_count]:
                           output_path = os.path.join(dir_result,'trainB', f"{image_count}.png")
-                          augmented_image.save(output_path)
-                          image_count += 1
                         else :
                           output_path = os.path.join(dir_result,'testB', f"{image_count}.png")
-                          augmented_image.save(output_path)
-                          image_count += 1
+                        augmented_image.save(output_path)
+                        image_count += 1
                         print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
 
 
@@ -227,3 +232,10 @@ def main() -> None:
 if __name__ == "__main__":
     print('Starting data cropping and augmentation...')
     main()
+    # image = crop_relevant_zone('datasets/data_original/CFRP_60_low/Record_2025-11-11_10-49-48.tiff', in_size, tiff=True)
+    # image =reformate_size(image, (256,256))
+    # image.save('test_crop.png')
+    # image = crop_relevant_zone('datasets/data_original/CFRP_60_high/prst_A_stat_03_5_230149.png', out_size, tiff=False)
+    # image =reformate_size(image, (256,256))
+    # image.save('test_crop2.png')
+    
