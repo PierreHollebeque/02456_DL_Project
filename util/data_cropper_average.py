@@ -98,7 +98,7 @@ def flip(image: Image.Image, horizontal: bool = False, vertical: bool = False) -
 
 
 
-def data_generator(average=False, force=False):
+def data_generator(average=False, force=False, flip=True):
     flip_possible = [(False, False), (True, False), (False, True), (True, True)]
 
     # Create output directory / reset it 
@@ -121,7 +121,10 @@ def data_generator(average=False, force=False):
         # Process low-resolution images
         print("--- Processing low-resolution images ---")
         image_count = 0
-        number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')]) * 4 
+        if flip :
+            number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')]) * 4 
+        else :
+            number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')])
         list_train_test = create_list(number_of_images)
         for filename in os.listdir(dir_low):
             if filename.endswith('.tiff'):
@@ -129,8 +132,8 @@ def data_generator(average=False, force=False):
                 cropped_image = crop_relevant_zone(inputh_path, in_size, tiff=True)
                 cropped_image = reformate_size(cropped_image, (256,256))
                 if cropped_image is not None:
-                    for h_flip, v_flip in flip_possible:
-                        augmented_image = flip(cropped_image, horizontal=h_flip, vertical=v_flip)
+                    if not flip :
+                        augmented_image = cropped_image
                         if list_train_test[image_count]:
                             output_path = os.path.join(dir_result,'trainA', f"{image_count}.png")
                         else :
@@ -138,6 +141,16 @@ def data_generator(average=False, force=False):
                         augmented_image.save(output_path)
                         image_count += 1
                         print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
+                    else :
+                        for h_flip, v_flip in flip_possible:
+                            augmented_image = flip(cropped_image, horizontal=h_flip, vertical=v_flip)
+                            if list_train_test[image_count]:
+                                output_path = os.path.join(dir_result,'trainA', f"{image_count}.png")
+                            else :
+                                output_path = os.path.join(dir_result,'testA', f"{image_count}.png")
+                            augmented_image.save(output_path)
+                            image_count += 1
+                            print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
 
 
 
@@ -150,15 +163,25 @@ def data_generator(average=False, force=False):
                 inputh_path = os.path.join(dir_high, filename)
                 cropped_image = crop_relevant_zone(inputh_path, out_size)
                 cropped_image = reformate_size(cropped_image, (256,256))
-                for h_flip, v_flip in flip_possible:
-                    augmented_image = flip(cropped_image, horizontal=h_flip, vertical=v_flip)
+                if not flip :
+                    augmented_image = cropped_image
                     if list_train_test[image_count]:
-                      output_path = os.path.join(dir_result,'trainB', f"{image_count}.png")
+                        output_path = os.path.join(dir_result,'trainB', f"{image_count}.png")
                     else :
-                      output_path = os.path.join(dir_result,'testB', f"{image_count}.png")
+                        output_path = os.path.join(dir_result,'testB', f"{image_count}.png")
                     augmented_image.save(output_path)
                     image_count += 1
                     print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
+                else :
+                    for h_flip, v_flip in flip_possible:
+                        augmented_image = flip(cropped_image, horizontal=h_flip, vertical=v_flip)
+                        if list_train_test[image_count]:
+                            output_path = os.path.join(dir_result,'trainB', f"{image_count}.png")
+                        else :
+                            output_path = os.path.join(dir_result,'testB', f"{image_count}.png")
+                        augmented_image.save(output_path)
+                        image_count += 1
+                        print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
 
     else :
         print('Processing with averaging...')
@@ -166,7 +189,10 @@ def data_generator(average=False, force=False):
         # Process low-resolution images
         print("--- Processing low-resolution images ---")
         image_count = 0
-        number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')])*4*(len([name for name in os.listdir(dir_low) if name.endswith('.tiff')])-1)
+        if flip :
+            number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')]) * 4 * (len([name for name in os.listdir(dir_low) if name.endswith('.tiff')])-1)
+        else :
+            number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')]) *(len([name for name in os.listdir(dir_low) if name.endswith('.tiff')])-1)
         list_train_test = create_list(number_of_images)
         for filename1 in os.listdir(dir_low):
             for filename2 in os.listdir(dir_low):
@@ -178,8 +204,8 @@ def data_generator(average=False, force=False):
                     if cropped_image1 is not None or cropped_image2 is not None:
                         average_image = Image.blend(cropped_image1, cropped_image2, alpha=0.5)
                         average_image = reformate_size(average_image, (256,256))
-                        for h_flip, v_flip in flip_possible:
-                            augmented_image = flip(average_image, horizontal=h_flip, vertical=v_flip)
+                        if not flip :
+                            augmented_image = average_image
                             if list_train_test[image_count]:
                                 output_path = os.path.join(dir_result,'trainA', f"{image_count}.png")
                             else :
@@ -187,6 +213,16 @@ def data_generator(average=False, force=False):
                             augmented_image.save(output_path)
                             image_count += 1
                             print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
+                        else :
+                            for h_flip, v_flip in flip_possible:
+                                augmented_image = flip(average_image, horizontal=h_flip, vertical=v_flip)
+                                if list_train_test[image_count]:
+                                    output_path = os.path.join(dir_result,'trainA', f"{image_count}.png")
+                                else :
+                                    output_path = os.path.join(dir_result,'testA', f"{image_count}.png")
+                                augmented_image.save(output_path)
+                                image_count += 1
+                                print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
         
         # Process high-resolution images
         print("--- Processing high-resolution images ---")
@@ -200,15 +236,25 @@ def data_generator(average=False, force=False):
                     cropped_image2 = crop_relevant_zone(inputh_path, out_size)
                     average_image = Image.blend(cropped_image1, cropped_image2, alpha=0.5)
                     average_image = reformate_size(average_image, (256,256))
-                    for h_flip, v_flip in flip_possible:
-                        augmented_image = flip(average_image, horizontal=h_flip, vertical=v_flip)
+                    if not flip :
+                        augmented_image = average_image
                         if list_train_test[image_count]:
-                          output_path = os.path.join(dir_result,'trainB', f"{image_count}.png")
+                            output_path = os.path.join(dir_result,'trainB', f"{image_count}.png")
                         else :
-                          output_path = os.path.join(dir_result,'testB', f"{image_count}.png")
+                            output_path = os.path.join(dir_result,'testB', f"{image_count}.png")
                         augmented_image.save(output_path)
                         image_count += 1
                         print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
+                    else :
+                        for h_flip, v_flip in flip_possible:
+                            augmented_image = flip(average_image, horizontal=h_flip, vertical=v_flip)
+                            if list_train_test[image_count]:
+                                output_path = os.path.join(dir_result,'trainB', f"{image_count}.png")
+                            else :
+                                output_path = os.path.join(dir_result,'testB', f"{image_count}.png")
+                            augmented_image.save(output_path)
+                            image_count += 1
+                            print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
 
 
 
@@ -220,6 +266,11 @@ def main() -> None:
                         default=False,
                         required=False,
                         help="Create the average datasets N*(N-1) elements")
+    parser.add_argument("--flip",
+                        type=bool,
+                        default=True,
+                        required=False,
+                        help="Flip vertically and horizontally images (multiply number of images by 4)")
     parser.add_argument("--force_create",
                         type=bool,
                         default=False,
@@ -227,7 +278,7 @@ def main() -> None:
                         help="Overwrite the existing dataset folder if it exists")
     args = parser.parse_args()
 
-    data_generator(average=args.average,force = args.force_create)
+    data_generator(average=args.average,force = args.force_create,flip=args.flip)
 
 if __name__ == "__main__":
     print('Starting data cropping and augmentation...')
