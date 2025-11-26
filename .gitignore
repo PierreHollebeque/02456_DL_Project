@@ -1,6 +1,7 @@
 .DS_Store
 debug*
 datasets/data_original/
+datasets/ifr_images/
 references/
 checkpoints/
 results/
