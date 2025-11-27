@@ -4,8 +4,7 @@ import random
 from PIL import Image, ImageFilter, ImageEnhance
 
 # Download latest version
-path = kagglehub.dataset_download("dimensi0n/imagenet-256")
-print("Path to dataset files:", path)
+
 
 
 def process_and_split_images(source_path, base_dest_path, train_ratio=0.95):
@@ -18,7 +17,7 @@ def process_and_split_images(source_path, base_dest_path, train_ratio=0.95):
     os.makedirs(test_b_path, exist_ok=True)
     os.makedirs(train_a_path, exist_ok=True)
     os.makedirs(test_a_path, exist_ok=True)
-
+    
     for root, _, files in os.walk(source_path):
         for file in files:
             if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
@@ -42,7 +41,7 @@ def process_and_split_images(source_path, base_dest_path, train_ratio=0.95):
                     
                     # Increase exposure
                     enhancer = ImageEnhance.Brightness(img_a)
-                    img_a = enhancer.enhance(1.2) # Increase brightness by 20%
+                    img_a = enhancer.enhance(1.3) # Increase brightness by 30%
 
                     # Low pixel aggregation (downscale and upscale)
                     img_a = img_a.resize((128, 128), Image.BILINEAR).resize((256, 256), Image.BILINEAR)
@@ -52,8 +51,10 @@ def process_and_split_images(source_path, base_dest_path, train_ratio=0.95):
                 except Exception as e:
                     print(f"Error processing {file}: {e}")
 
-# Example usage:
-source_directory = path  # Use the downloaded dataset path
-destination_directory = 'datasets/mock_images'
+
 if __name__ == '__main__':
+    # path = kagglehub.dataset_download("dimensi0n/imagenet-256")
+    # print("Path to dataset files:", path)
+    source_directory = "../../.cache/kagglehub/datasets/dimensi0n/imagenet-256/versions/1"  # Use the downloaded dataset path
+    destination_directory = 'datasets/mock_images'
     process_and_split_images(source_directory, destination_directory)
