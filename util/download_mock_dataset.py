@@ -19,6 +19,7 @@ def process_and_split_images(source_path, base_dest_path, train_ratio=0.95):
     os.makedirs(test_a_path, exist_ok=True)
     
     for root, _, files in os.walk(source_path):
+        print(files)
         for file in files:
             if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
                 original_image_path = os.path.join(root, file)
