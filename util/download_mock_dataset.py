@@ -18,8 +18,8 @@ def process_and_split_images(source_path, base_dest_path, train_ratio=0.95):
     os.makedirs(train_a_path, exist_ok=True)
     os.makedirs(test_a_path, exist_ok=True)
     
-    for root, _, files in os.walk(source_path):
-        print(files)
+    for root, dirs, files in os.walk(source_path):
+        print(dirs)
         for file in files:
             if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
                 original_image_path = os.path.join(root, file)
@@ -35,7 +35,6 @@ def process_and_split_images(source_path, base_dest_path, train_ratio=0.95):
                 # Process image for 'A' folders
                 try:
                     img = Image.open(original_image_path).convert("RGB")
-                    img = img.resize((256, 256))
 
                     # Apply blur
                     img_a = img.filter(ImageFilter.GaussianBlur(radius=1))
@@ -47,8 +46,9 @@ def process_and_split_images(source_path, base_dest_path, train_ratio=0.95):
                     # Low pixel aggregation (downscale and upscale)
                     img_a = img_a.resize((128, 128), Image.BILINEAR).resize((256, 256), Image.BILINEAR)
 
-                    img_a.save(os.path.join(dest_a_folder, file))
-                    img.save(os.path.join(dest_b_folder, file))
+                    # Construct the filename using the parent directory name and the original file name
+                    img_a.save(os.path.join(dest_a_folder, f'{os.path.basename(root)}_{file}'))
+                    img.save(os.path.join(dest_b_folder, f'{os.path.basename(root)}_{file}'))
                 except Exception as e:
                     print(f"Error processing {file}: {e}")
 
