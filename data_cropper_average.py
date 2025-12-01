@@ -1,28 +1,28 @@
-from PIL import Image, ImageDraw
+from PIL import Image, ImageChops
 import numpy as np
 import os, shutil, argparse
+import random
 
+def create_list(N):
+    n_true = int(N * 0.8)
+    n_false = N - n_true
+    lst = [True] * n_true + [False] * n_false
+    random.shuffle(lst)
+    return lst
 
 from scipy.ndimage import gaussian_filter
 
-import os
-import numpy as np
-import matplotlib.pyplot as plt
-from PIL import Image, ImageDraw, ImageChops
-from scipy.ndimage import gaussian_filter
 
-
-dir_low = 'data/CFRP_60_low/'
-dir_high = 'data/CFRP_60_high/'
-dir_result = 'data/enhanced/'
-in_size = (40, 120)
-out_size = (80, 240)
+dir_low = 'datasets/data_original/CFRP_60_low/'
+dir_high = 'datasets/data_original/CFRP_60_high/'
+dir_result = 'datasets/data_cropped/'
+in_size = (40, 128)
+out_size = (80, 256)
 
 
 def crop_relevant_zone(image_path: str, crop_size: tuple[int, int], tiff=False):
     try:
         raw_image = Image.open(image_path)
-        
         # Apply specific processing if tiff is True
         if tiff:
             try:
@@ -40,7 +40,6 @@ def crop_relevant_zone(image_path: str, crop_size: tuple[int, int], tiff=False):
         else:
             # Otherwise use the image as is
             original_image = raw_image
-
     except FileNotFoundError:
         print(f"Error: The file '{image_path}' was not found.")
         return None
@@ -49,16 +48,14 @@ def crop_relevant_zone(image_path: str, crop_size: tuple[int, int], tiff=False):
         return None
 
     if original_image.mode not in ['I', 'F', 'L']:
-        grayscale_image = original_image.convert('L') # 'L' converts to 8-bit grayscale
+        grayscale_image = original_image.convert('L') # 'L' converts to 8-bit grayscale, which is fine for finding the location of max brightness
     else:
         grayscale_image = original_image
 
     image_array = np.array(grayscale_image)
-    
-    # Safety check to avoid errors on empty/black images
     if image_array.size == 0 or image_array.max() == image_array.min():
-         return None
-
+        print(f"Error: The image '{image_path}' is empty or has no variation in pixel values.")
+        return None
     window_size = 150
     filtered_image = gaussian_filter(image_array.astype(np.float32), sigma= window_size/6)
 
@@ -81,6 +78,16 @@ def crop_relevant_zone(image_path: str, crop_size: tuple[int, int], tiff=False):
     cropped_image = original_image.crop(crop_box)
     return cropped_image
 
+def reformate_size(image: Image.Image, target_size: tuple[int, int]) -> Image.Image:
+    current_size = image.size
+    new_image = Image.new("RGB", target_size)
+    if target_size[1] != current_size[1]:
+        image = image.resize(out_size)
+        current_size = image.size
+    x_coord = (target_size[0] - current_size[0]) //2
+    new_image.paste(image, (x_coord, 0))
+    return new_image
+
 
 def flip(image: Image.Image, horizontal: bool = False, vertical: bool = False) -> Image.Image:
     if horizontal:
@@ -91,18 +98,22 @@ def flip(image: Image.Image, horizontal: bool = False, vertical: bool = False) -
 
 
 
-def data_generator(average=False):
+def data_generator(average=False, force=False, flip_bool=True):
     flip_possible = [(False, False), (True, False), (False, True), (True, True)]
 
     # Create output directory / reset it 
     if not os.path.exists(dir_result):
         os.makedirs(dir_result)
+    elif not force :
+        print(f"Directory {dir_result} already exists. Use force=True to overwrite.")
+        return
     else : 
         shutil.rmtree(dir_result)
         os.makedirs(dir_result)
-    
-    os.makedirs(os.path.join(dir_result,'low'))
-    os.makedirs(os.path.join(dir_result,'high'))
+    os.makedirs(os.path.join(dir_result,'testA'))
+    os.makedirs(os.path.join(dir_result,'testB'))
+    os.makedirs(os.path.join(dir_result,'trainA'))
+    os.makedirs(os.path.join(dir_result,'trainB'))
 
     if not average :
         print('Processing without averaging...')
@@ -110,42 +121,67 @@ def data_generator(average=False):
         # Process low-resolution images
         print("--- Processing low-resolution images ---")
         image_count = 0
-        # Note: Le calcul de number_of_images est approximatif ici (dépend du filtre) mais utile pour la barre de progression
-        tiff_files = [name for name in os.listdir(dir_low) if name.endswith('.tiff')]
-        number_of_images = len(tiff_files) * 4 
-        
-        for filename in tiff_files:
-            inputh_path = os.path.join(dir_low, filename)
-            # On garde tiff=True ici pour l'overlay
-            cropped_image = crop_relevant_zone(inputh_path, in_size, tiff=True)
-            
-            if cropped_image is not None:
-                for h_flip, v_flip in flip_possible:
-                    augmented_image = flip(cropped_image, horizontal=h_flip, vertical=v_flip)
-                    output_path = os.path.join(dir_result, 'low', f"{image_count}.png")
-                    augmented_image.save(output_path)
-                    image_count += 1
-                    print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
-        print("") # Retour à la ligne après la boucle
+        if flip_bool :
+            number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')]) * 4 
+        else :
+            number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')])
+        list_train_test = create_list(number_of_images)
+        for filename in os.listdir(dir_low):
+            if filename.endswith('.tiff'):
+                inputh_path = os.path.join(dir_low, filename)
+                cropped_image = crop_relevant_zone(inputh_path, in_size, tiff=True)
+                cropped_image = reformate_size(cropped_image, (256,256))
+                if cropped_image is not None:
+                    if not flip_bool :
+                        augmented_image = cropped_image
+                        if list_train_test[image_count]:
+                            output_path = os.path.join(dir_result,'trainA', f"{image_count}.png")
+                        else :
+                            output_path = os.path.join(dir_result,'testA', f"{image_count}.png")
+                        augmented_image.save(output_path)
+                        image_count += 1
+                        print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
+                    else :
+                        for h_flip, v_flip in flip_possible:
+                            augmented_image = flip(cropped_image, horizontal=h_flip, vertical=v_flip)
+                            if list_train_test[image_count]:
+                                output_path = os.path.join(dir_result,'trainA', f"{image_count}.png")
+                            else :
+                                output_path = os.path.join(dir_result,'testA', f"{image_count}.png")
+                            augmented_image.save(output_path)
+                            image_count += 1
+                            print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
+
+
+
         
         # Process high-resolution images
         print("--- Processing high-resolution images ---")
         image_count = 0
-        png_files = [name for name in os.listdir(dir_high) if name.endswith('.png')]
-        number_of_images = len(png_files) * 4
-        
-        for filename in png_files:
-            inputh_path = os.path.join(dir_high, filename)
-            cropped_image = crop_relevant_zone(inputh_path, out_size)
-            
-            if cropped_image is not None:
-                for h_flip, v_flip in flip_possible:
-                    augmented_image = flip(cropped_image, horizontal=h_flip, vertical=v_flip)
-                    output_path = os.path.join(dir_result, 'high', f"{image_count}.png")
+        for filename in os.listdir(dir_high):
+            if filename.endswith('.png'):
+                inputh_path = os.path.join(dir_high, filename)
+                cropped_image = crop_relevant_zone(inputh_path, out_size)
+                cropped_image = reformate_size(cropped_image, (256,256))
+                if not flip_bool :
+                    augmented_image = cropped_image
+                    if list_train_test[image_count]:
+                        output_path = os.path.join(dir_result,'trainB', f"{image_count}.png")
+                    else :
+                        output_path = os.path.join(dir_result,'testB', f"{image_count}.png")
                     augmented_image.save(output_path)
                     image_count += 1
                     print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
-        print("")
+                else :
+                    for h_flip, v_flip in flip_possible:
+                        augmented_image = flip(cropped_image, horizontal=h_flip, vertical=v_flip)
+                        if list_train_test[image_count]:
+                            output_path = os.path.join(dir_result,'trainB', f"{image_count}.png")
+                        else :
+                            output_path = os.path.join(dir_result,'testB', f"{image_count}.png")
+                        augmented_image.save(output_path)
+                        image_count += 1
+                        print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
 
     else :
         print('Processing with averaging...')
@@ -153,70 +189,115 @@ def data_generator(average=False):
         # Process low-resolution images
         print("--- Processing low-resolution images ---")
         image_count = 0
-        tiff_files = [name for name in os.listdir(dir_low) if name.endswith('.tiff')]
-        number_of_images = len(tiff_files) * 4 * (len(tiff_files)-1)
-        
-        for filename1 in tiff_files:
-            for filename2 in tiff_files:
-                if filename1 != filename2:
-                    inputh_path1 = os.path.join(dir_low, filename1)
-                    cropped_image1 = crop_relevant_zone(inputh_path1, in_size, tiff=True)
-                    
-                    inputh_path2 = os.path.join(dir_low, filename2)
-                    cropped_image2 = crop_relevant_zone(inputh_path2, in_size, tiff=True)
-                    
-                    if cropped_image1 is not None and cropped_image2 is not None:
+        if flip_bool :
+            number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')]) * 4 * (len([name for name in os.listdir(dir_low) if name.endswith('.tiff')])-1)
+        else :
+            number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')]) *(len([name for name in os.listdir(dir_low) if name.endswith('.tiff')])-1)
+        list_train_test = create_list(number_of_images)
+        for filename1 in os.listdir(dir_low):
+            for filename2 in os.listdir(dir_low):
+                if filename1.endswith('.tiff') and filename2.endswith('.tiff') and filename1 != filename2:
+                    inputh_path = os.path.join(dir_low, filename1)
+                    cropped_image1 = crop_relevant_zone(inputh_path, in_size, tiff=True)
+                    inputh_path = os.path.join(dir_low, filename2)
+                    cropped_image2 = crop_relevant_zone(inputh_path, in_size, tiff=True)
+                    if cropped_image1 is not None or cropped_image2 is not None:
                         average_image = Image.blend(cropped_image1, cropped_image2, alpha=0.5)
-
-                        for h_flip, v_flip in flip_possible:
-                            augmented_image = flip(average_image, horizontal=h_flip, vertical=v_flip)
-                            output_path = os.path.join(dir_result, 'low', f"{image_count}.png")
+                        average_image = reformate_size(average_image, (256,256))
+                        if not flip_bool :
+                            augmented_image = average_image
+                            if list_train_test[image_count]:
+                                output_path = os.path.join(dir_result,'trainA', f"{image_count}.png")
+                            else :
+                                output_path = os.path.join(dir_result,'testA', f"{image_count}.png")
                             augmented_image.save(output_path)
                             image_count += 1
                             print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
-        print("")
-
+                        else :
+                            for h_flip, v_flip in flip_possible:
+                                augmented_image = flip(average_image, horizontal=h_flip, vertical=v_flip)
+                                if list_train_test[image_count]:
+                                    output_path = os.path.join(dir_result,'trainA', f"{image_count}.png")
+                                else :
+                                    output_path = os.path.join(dir_result,'testA', f"{image_count}.png")
+                                augmented_image.save(output_path)
+                                image_count += 1
+                                print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
+        
         # Process high-resolution images
         print("--- Processing high-resolution images ---")
         image_count = 0
-        png_files = [name for name in os.listdir(dir_high) if name.endswith('.png')]
-        # Note: Le calcul number_of_images ici est indicatif
-        
-        for filename1 in png_files:
-            for filename2 in png_files:
-                if filename1 != filename2:
-                    inputh_path1 = os.path.join(dir_high, filename1)
-                    # Correction: in_size -> out_size
-                    cropped_image1 = crop_relevant_zone(inputh_path1, out_size)
-                    
-                    inputh_path2 = os.path.join(dir_high, filename2)
-                    # Correction: in_size -> out_size
-                    cropped_image2 = crop_relevant_zone(inputh_path2, out_size)
-                    
-                    if cropped_image1 is not None and cropped_image2 is not None:
-                        average_image = Image.blend(cropped_image1, cropped_image2, alpha=0.5)
-
+        for filename1 in os.listdir(dir_high):
+            for filename2 in os.listdir(dir_high):
+                if filename1.endswith('.png') and filename2.endswith('.png') and filename1 != filename2:
+                    inputh_path = os.path.join(dir_high, filename1)
+                    cropped_image1 = crop_relevant_zone(inputh_path, out_size)
+                    inputh_path = os.path.join(dir_high, filename2)
+                    cropped_image2 = crop_relevant_zone(inputh_path, out_size)
+                    average_image = Image.blend(cropped_image1, cropped_image2, alpha=0.5)
+                    average_image = reformate_size(average_image, (256,256))
+                    if not flip_bool :
+                        augmented_image = average_image
+                        if list_train_test[image_count]:
+                            output_path = os.path.join(dir_result,'trainB', f"{image_count}.png")
+                        else :
+                            output_path = os.path.join(dir_result,'testB', f"{image_count}.png")
+                        augmented_image.save(output_path)
+                        image_count += 1
+                        print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
+                    else :
                         for h_flip, v_flip in flip_possible:
                             augmented_image = flip(average_image, horizontal=h_flip, vertical=v_flip)
-                            output_path = os.path.join(dir_result, 'high', f"{image_count}.png")
+                            if list_train_test[image_count]:
+                                output_path = os.path.join(dir_result,'trainB', f"{image_count}.png")
+                            else :
+                                output_path = os.path.join(dir_result,'testB', f"{image_count}.png")
                             augmented_image.save(output_path)
                             image_count += 1
-                            print(f"Processed and saved image: {image_count}", end='\r')
-        print("")
+                            print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
 
+
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
 def main() -> None:
     # Read parameters from configuration file
     parser = argparse.ArgumentParser()
     parser.add_argument("--average",
-                        type=str,
+                        type=str2bool,
                         default=False,
                         required=False,
-                        help="Path to test config file.")
+                        help="Create the average datasets N*(N-1) elements")
+    parser.add_argument("--flip",
+                        type=str2bool,
+                        default=True,
+                        required=False,
+                        help="Flip vertically and horizontally images (multiply number of images by 4)")
+    parser.add_argument("--force_create",
+                        type=str2bool,
+                        default=False,
+                        required=False,
+                        help="Overwrite the existing dataset folder if it exists")
     args = parser.parse_args()
-
-    data_generator(average=args.average)
+    print(args.flip)
+    data_generator(average=args.average,force = args.force_create,flip_bool=args.flip)
 
 if __name__ == "__main__":
+    print('Starting data cropping and augmentation...')
     main()
+    # image = crop_relevant_zone('datasets/data_original/CFRP_60_low/Record_2025-11-11_10-49-48.tiff', in_size, tiff=True)
+    # image =reformate_size(image, (256,256))
+    # image.save('test_crop.png')
+    # image = crop_relevant_zone('datasets/data_original/CFRP_60_high/prst_A_stat_03_5_230149.png', out_size, tiff=False)
+    # image =reformate_size(image, (256,256))
+    # image.save('test_crop2.png')
+    
