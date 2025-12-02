@@ -2,15 +2,15 @@
 import matplotlib.pyplot as plt
 import re
 
-from .base_options import BaseOptions
-
-class PlotOptions(BaseOptions):
+import argparse
+class PlotOptions:
     """This class includes training options.
     It also includes shared options defined in BaseOptions.
     """
-
+    def __init__(self):
+            """Reset the class; indicates the class hasn't been initailized"""
+            self.initialized = False
     def initialize(self, parser):
-        parser = BaseOptions.initialize(self, parser)
         # HTML visualization parameters
         parser.add_argument('--name', type=str, default='ifr_model_resnet_square', help='name of the projet')
 
