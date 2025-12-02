@@ -12,4 +12,5 @@ pandas
 seaborn
 opencv-python
 scipy
+cv2
 kagglehub

@@ -38,7 +38,7 @@ Use the following bash command :
 
 ### Step 3 - Training
 ```text
-python train.py --dataroot ./datasets/ifr_images --name ifr_model_resnet_square --model cycle_gan  --init_type xavier --netG resnet_6blocks --n_epochs 3 --n_epochs_decay 6 --batch_size 8 --lambda_B 5 --pool_size 80 --preprocess none
+python train.py --dataroot ./datasets/ifr_images --name ifr_model_resnet_final --model cycle_gan  --init_type xavier --netG resnet_6blocks --n_epochs 3 --n_epochs_decay 6 --batch_size 8 --lambda_B 5 --pool_size 80 --preprocess none
 ```
 
 - `name` : name of the experiment. It decides where to store samples and models. Here, we use fir_images_resnet_suqre
@@ -53,11 +53,11 @@ python train.py --dataroot ./datasets/ifr_images --name ifr_model_resnet_square 
 
 (more details in `options\`)
 
-You can find the loss_log (useful to plot training curves) and model performance over epochs in the folder `checkpoints/ifr_model_resnet_square`.
+You can find the loss_log (useful to plot training curves) and model performance over epochs in the folder `checkpoints/ifr_model_resnet_final`.
 
 ```text
 checkpoints/
-└── ifr_model_resnet_square/
+└── ifr_model_resnet_final/
     ├── log_loss.txt
     └── web/
         ├── images/
@@ -73,11 +73,11 @@ python test.py  --dataroot ./datasets/ifr_images --name ifr_model_resnet
 
 (more details in `options\`)
 
-You can find the results of your tests (the ouput images) in the folder `results/ifr_model_resnet_square`
+You can find the results of your tests (the ouput images) in the folder `results/ifr_model_resnet_final`
 
 ```text
 results/
-└── ifr_model_resnet_square/
+└── ifr_model_resnet_final/
     └── test_latest/
         ├── images/
         └── index.html
@@ -90,14 +90,14 @@ results/
 To plot the loss of the CyclaGAN training, use the following bash command:
 
 ```text
-python util/plot_loss_results.py --name ifr_model_resnet_square
+python util/plot_loss_results.py --name ifr_model_resnet_final
 ```
 
 `cyclegan_losses_4_levels.png` is saved in 
 
 ```text
 results/
-└── ifr_model_resnet_square/
+└── ifr_model_resnet_final/
     ├── cyclegan_losses_4_levels.png
     └── test_latest/
         ├── images/
