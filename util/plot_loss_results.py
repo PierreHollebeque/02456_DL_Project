@@ -107,10 +107,10 @@ try:
         ax.grid(True, linestyle='--', alpha=0.5)
 
     # Plotting the 4 distinct levels with custom y-axis scales
-    plot_on_axis(ax_id,    group_id,    0.1,   "1. Identity Losses (Color Preservation)")
-    plot_on_axis(ax_cycle, group_cycle, 0.25,  "2. Cycle Consistency Losses (Reconstruction)")
-    plot_on_axis(ax_gen,   group_gen,   0.5,   "3. Generator Adversarial Losses (Fooling D)")
-    plot_on_axis(ax_disc,  group_disc,  0.5,   "4. Discriminator Losses (Real vs Fake)")
+    plot_on_axis(ax_id,    group_id,    0.05,   "1. Identity Losses (Color Preservation)")
+    plot_on_axis(ax_cycle, group_cycle, 0.15,  "2. Cycle Consistency Losses (Reconstruction)")
+    plot_on_axis(ax_gen,   group_gen,   0.4,   "3. Generator Adversarial Losses (Fooling D)")
+    plot_on_axis(ax_disc,  group_disc,  0.35,   "4. Discriminator Losses (Real vs Fake)")
 
     # Set X-label only on the bottom graph
     ax_disc.set_xlabel(f"Epochs (Total: {int(total_epochs)})", fontsize=12)
