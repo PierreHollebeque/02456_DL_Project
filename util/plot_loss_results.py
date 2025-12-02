@@ -20,7 +20,7 @@ class PlotOptions(BaseOptions):
 opt = PlotOptions().parse()  # get training options
 
 
-filename = f'checkpoints/{opt['--name']}/loss_log.txt' 
+filename = f'checkpoints/{opt.name}/loss_log.txt' 
 
 # Data storage
 global_iterations = [] 
@@ -111,7 +111,7 @@ try:
     plt.tight_layout()
     
     # Optional: Save the figure
-    plt.savefig(f"results/{opt['--name']}/cyclegan_losses_4_levels.png", dpi=300)
+    plt.savefig(f"results/{opt.name}/cyclegan_losses_4_levels.png", dpi=300)
     
     plt.show()
 
