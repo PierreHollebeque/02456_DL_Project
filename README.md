@@ -98,9 +98,9 @@ python util/plot_loss_results.py --name ifr_model_resnet_square
 ```text
 results/
 └── ifr_model_resnet_square/
-    ├── test_latest/
+    ├── cyclegan_losses_4_levels.png
+    └── test_latest/
         ├── images/
         └── index.html
-    └── cyclegan_losses_4_levels.png
 ```
 
