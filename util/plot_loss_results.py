@@ -34,7 +34,6 @@ last_iter = 0
 epoch_boundaries = [] 
 
 try:
-    print(f"Reading file: {filename}")
     with open(filename, 'r') as f:
         for line in f:
             # Skip lines that don't contain iteration info
@@ -47,15 +46,17 @@ try:
                 current_iter = int(iter_match.group(1))
                 
                 # --- EPOCH DETECTION LOGIC ---
-                # If current iter is smaller than previous, a new epoch started.
+                # If the current iteration is smaller than the previous one,
+                # it means a new epoch has started. We update the offset.
                 if current_iter < last_iter:
                     offset += last_iter
                     epoch_boundaries.append(offset)
                 
-                # Calculate global iteration (cumulative)
+                # Calculate global iteration (absolute/cumulative)
                 global_iter = current_iter + offset
                 global_iterations.append(global_iter)
                 
+                # Update last known iteration
                 last_iter = current_iter
             
                 # Extract loss values
@@ -65,48 +66,57 @@ try:
                         losses[key].append(float(loss_match.group(1)))
                     else:
                         losses[key].append(None)
-                    
 
-    # --- 3. PLOTTING ---
-    if not global_iterations:
-        print("No data found. Please check the log file format.")
-        exit()
-
+    # --- CONVERT ITERATIONS TO EPOCHS ---
+    # The number of iterations in the first epoch determines the scale
+    iters_per_epoch = epoch_boundaries[0]+80 if epoch_boundaries else (global_iterations[-1] if global_iterations else 1)
+    # Convert the list of global iterations to a list of corresponding epoch numbers
+    epochs = [i / iters_per_epoch for i in global_iterations]
+    total_epochs = epochs[-1] if epochs else 0
+    print(total_epochs)
+    # --- PLOTTING ---
     # Create 4 stacked subplots sharing the same X-axis
     fig, (ax_id, ax_gen, ax_cycle, ax_disc) = plt.subplots(4, 1, figsize=(12, 16), sharex=True)
 
+    # Define groups for each subplot
     group_id    = ['idt_A', 'idt_B']
-    group_gen   = ['G_A', 'G_B']       
-    group_cycle = ['cycle_A', 'cycle_B'] 
+    group_gen   = ['G_A', 'G_B']         # Pure adversarial loss
+    group_cycle = ['cycle_A', 'cycle_B'] # Cycle consistency loss
     group_disc  = ['D_A', 'D_B']
 
-    def plot_on_axis(ax, keys, title):
+    # Helper function to plot on a specific axis
+    def plot_on_axis(ax, keys, max_val, title):
         for key in keys:
             values = losses[key]
-            # Filter out None values to prevent gaps/errors
-            valid_data = [(i, v) for i, v in zip(global_iterations, values) if v is not None]
+            # Filter out None values to keep lines clean
+            valid_data = [(e, v) for e, v in zip(epochs, values) if v is not None]
             if valid_data:
-                valid_iters, valid_vals = zip(*valid_data)
-                ax.plot(valid_iters, valid_vals, label=key, linewidth=1.5, alpha=0.8)
+                valid_epochs, valid_vals = zip(*valid_data)
+                ax.plot(valid_epochs, valid_vals, label=key, linewidth=1.5, alpha=0.8)
         
-        # Draw vertical lines for Epochs
-        for boundary in epoch_boundaries:
-            ax.axvline(x=boundary, color='black', linestyle='--', alpha=0.3)
+        ax.set_ylim(0, max_val)
+        ax.set_xlim(0, total_epochs)
+        
+        # Draw vertical lines every 50 epochs
+        for epoch_mark in range(0, int(total_epochs) + 1, 50):
+            ax.axvline(x=epoch_mark, color='black', linestyle='--', alpha=0.4)
             
         ax.set_title(title, fontsize=12, fontweight='bold')
         ax.set_ylabel("Loss")
         ax.legend(loc='upper right')
         ax.grid(True, linestyle='--', alpha=0.5)
 
-    plot_on_axis(ax_id,    group_id,    "1. Identity Losses (Color Preservation)")
-    plot_on_axis(ax_cycle, group_cycle, "2. Cycle Consistency Losses (Reconstruction)")
-    plot_on_axis(ax_gen,   group_gen,   "3. Generator Adversarial Losses (Fooling D)")
-    plot_on_axis(ax_disc,  group_disc,  "4. Discriminator Losses (Real vs Fake)")
+    # Plotting the 4 distinct levels with custom y-axis scales
+    plot_on_axis(ax_id,    group_id,    0.1,   "1. Identity Losses (Color Preservation)")
+    plot_on_axis(ax_cycle, group_cycle, 0.25,  "2. Cycle Consistency Losses (Reconstruction)")
+    plot_on_axis(ax_gen,   group_gen,   0.5,   "3. Generator Adversarial Losses (Fooling D)")
+    plot_on_axis(ax_disc,  group_disc,  0.5,   "4. Discriminator Losses (Real vs Fake)")
 
-    ax_disc.set_xlabel("Global Iterations (Cumulative)", fontsize=12)
+    # Set X-label only on the bottom graph
+    ax_disc.set_xlabel(f"Epochs (Total: {int(total_epochs)})", fontsize=12)
 
     plt.tight_layout()
-    
+
     # Save the figure
     save_path = os.path.join(save_dir, "cyclegan_losses_4_levels.png")
     plt.savefig(save_path, dpi=300)
