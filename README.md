@@ -84,3 +84,23 @@ results/
 ```
 `index.html` allow you to navigate through images.
 
+
+### Step 5 - Plot loss
+
+To plot the loss of the CyclaGAN training, use the following bash command:
+
+```text
+python util/plot_loss_results.py --name ifr_model_resnet_square
+```
+
+`cyclegan_losses_4_levels.png` is saved in 
+
+```text
+results/
+└── ifr_model_resnet_square/
+    ├── test_latest/
+        ├── images/
+        └── index.html
+    └── cyclegan_losses_4_levels.png
+```
+
