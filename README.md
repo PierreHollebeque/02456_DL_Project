@@ -63,7 +63,7 @@ checkpoints/
         ├── images/
         └── index.html
 ```
-`index.html` allow you to navigates through images.
+`index.html` allow you to navigate through images.
 
 ### Step 4 - Testing
 
@@ -82,5 +82,5 @@ results/
         ├── images/
         └── index.html
 ```
-`index.html` allow you to navigates through images.
+`index.html` allow you to navigate through images.
 
