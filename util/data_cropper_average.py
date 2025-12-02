@@ -3,8 +3,8 @@ import numpy as np
 import os, shutil, argparse
 import random
 
-def create_list(N):
-    n_true = int(N * 0.8)
+def create_list(N,percentage_test):
+    n_true = int(N * (1-percentage_test))
     n_false = N - n_true
     lst = [True] * n_true + [False] * n_false
     random.shuffle(lst)
@@ -98,7 +98,7 @@ def flip(image: Image.Image, horizontal: bool = False, vertical: bool = False) -
 
 
 
-def data_generator(average=False, force=False, flip_bool=True):
+def data_generator(average=False, force=False, flip_bool=True,only_train=False):
     flip_possible = [(False, False), (True, False), (False, True), (True, True)]
 
     # Create output directory / reset it 
@@ -122,10 +122,14 @@ def data_generator(average=False, force=False, flip_bool=True):
         print("--- Processing low-resolution images ---")
         image_count = 0
         if flip_bool :
+            print('--- Process with flip ---')
             number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')]) * 4 
         else :
             number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')])
-        list_train_test = create_list(number_of_images)
+        if only_train:
+            list_train_test = create_list(number_of_images,percentage_test=0)
+        else: 
+            list_train_test = create_list(number_of_images)
         for filename in os.listdir(dir_low):
             if filename.endswith('.tiff'):
                 inputh_path = os.path.join(dir_low, filename)
@@ -173,6 +177,7 @@ def data_generator(average=False, force=False, flip_bool=True):
                     image_count += 1
                     print(f"Processed and saved image: {image_count}/{number_of_images}", end='\r')
                 else :
+                    print('--- Process with flip ---')
                     for h_flip, v_flip in flip_possible:
                         augmented_image = flip(cropped_image, horizontal=h_flip, vertical=v_flip)
                         if list_train_test[image_count]:
@@ -193,7 +198,10 @@ def data_generator(average=False, force=False, flip_bool=True):
             number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')]) * 4 * (len([name for name in os.listdir(dir_low) if name.endswith('.tiff')])-1)
         else :
             number_of_images = len([name for name in os.listdir(dir_low) if name.endswith('.tiff')]) *(len([name for name in os.listdir(dir_low) if name.endswith('.tiff')])-1)
-        list_train_test = create_list(number_of_images)
+        if only_train:
+            list_train_test = create_list(number_of_images,percentage_test=0)
+        else: 
+            list_train_test = create_list(number_of_images)
         for filename1 in os.listdir(dir_low):
             for filename2 in os.listdir(dir_low):
                 if filename1.endswith('.tiff') and filename2.endswith('.tiff') and filename1 != filename2:
@@ -279,7 +287,7 @@ def main() -> None:
                         help="Create the average datasets N*(N-1) elements")
     parser.add_argument("--flip",
                         type=str2bool,
-                        default=True,
+                        default=False,
                         required=False,
                         help="Flip vertically and horizontally images (multiply number of images by 4)")
     parser.add_argument("--force_create",
@@ -287,9 +295,13 @@ def main() -> None:
                         default=False,
                         required=False,
                         help="Overwrite the existing dataset folder if it exists")
+    parser.add_argument("--only_train",
+                        type=str2bool,
+                        default=False,
+                        required=False,
+                        help="Send all to train")
     args = parser.parse_args()
-    print(args.flip)
-    data_generator(average=args.average,force = args.force_create,flip_bool=args.flip)
+    data_generator(average=args.average,force = args.force_create,flip_bool=args.flip,only_train=args.only_train)
 
 if __name__ == "__main__":
     print('Starting data cropping and augmentation...')

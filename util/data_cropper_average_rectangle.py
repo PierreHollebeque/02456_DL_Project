@@ -160,7 +160,6 @@ def main() -> None:
     # Read parameters from configuration file
     parser = argparse.ArgumentParser()
     args = parser.parse_args()
-    print(args.flip)
     data_generator()
 
 if __name__ == "__main__":
