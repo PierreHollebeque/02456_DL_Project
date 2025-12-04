@@ -68,7 +68,7 @@ checkpoints/
 ### Step 4 - Testing
 
 ```text
-python test.py  --dataroot ./datasets/ifr_images --name ifr_model_resnet 
+python test.py  --dataroot ./datasets/ifr_images --name ifr_model_resnet_final --netG resnet_6blocks --no_dropout --preprocess none
 ```
 
 (more details in `options\`)

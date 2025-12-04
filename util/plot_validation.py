@@ -209,8 +209,8 @@ def plot_distributions(low_to_high=image_path_a_default,high_to_low=image_path_b
     for category, values in data.items():
         print(f"{category}: Found {len(values['radii'])} circles.")
 
-    # Convert radii to diameters for plotting
-    diameters = {
+    # Convert radii to Radius for plotting
+    radius = {
         'real_low': np.array(data['real_low']['radii']),
         'fake_high': np.array(data['fake_high']['radii']),
         'real_high': np.array(data['real_high']['radii']),
@@ -219,21 +219,21 @@ def plot_distributions(low_to_high=image_path_a_default,high_to_low=image_path_b
 
 
     plt.style.use('seaborn-v0_8-whitegrid')
-    # --- Plot 1: Distribution of Circle Diameters (Superimposed) ---
+    # --- Plot 1: Distribution of Circle Radius (Superimposed) ---
     plt.figure(figsize=(12, 7))
     sns.set_palette("viridis") # Using a different color palette for clarity
     color_map = {'real_low': 'blue', 'fake_high': 'red', 'real_high': 'red', 'fake_low': 'blue'}
 
     # Plot a histogram and a KDE curve for each category
-    for label, diam_values in diameters.items():
+    for label, diam_values in radius.items():
         if len(diam_values) > 0:
             if 'real' in label :
                 sns.kdeplot(data=diam_values, linestyle=':', fill=False, label=label, color=color_map[label], alpha=0.4, linewidth=3)
             else :
                 sns.kdeplot(data=diam_values, fill=False, label=label, color=color_map[label], alpha=0.4, linewidth=3)
 
-    plt.title('Distribution of Detected Circle Diameters', fontsize=16)
-    plt.xlabel('Diameter (pixels)', fontsize=12)
+    plt.title('Distribution of Detected Circle Radius', fontsize=16)
+    plt.xlabel('Radius (pixels)', fontsize=12)
     plt.ylabel('Density', fontsize=12)
     plt.legend()
     plt.show()
