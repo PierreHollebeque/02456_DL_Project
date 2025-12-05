@@ -9,6 +9,9 @@
 ## The project
 This GitHub project is associated with a project report that contains an explanation of the issue addressed and the methodology implemented.
 
+## Notebook
+The notebook containing all the work done is called `main.ipynb`.
+
 ## Strucure of the code
 The part of the code on CyleGANs is based on another GitHub project, [CycleGAN and pix2pix in PyTorch](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix). This project was taken and adapted to suit our needs.
 
@@ -68,7 +71,7 @@ checkpoints/
 ### Step 4 - Testing
 
 ```text
-python test.py  --dataroot ./datasets/ifr_images --name ifr_model_resnet 
+python test.py  --dataroot ./datasets/ifr_images --name ifr_model_resnet_final --netG resnet_6blocks --no_dropout --preprocess none
 ```
 
 (more details in `options\`)
